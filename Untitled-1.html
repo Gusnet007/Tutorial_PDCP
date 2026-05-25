@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial 5G: A Camada PDCP</title>
+    <style>
+        :root {
+            --primary-color: #0056b3;
+            --secondary-color: #f4f7f6;
+            --text-color: #333;
+            --sidebar-bg: #2c3e50;
+            --sidebar-text: #ecf0f1;
+            --sidebar-hover: #34495e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            color: var(--text-color);
+            line-height: 1.6;
+            background-color: var(--secondary-color);
+        }
+
+        /* Sidebar Navegação */
+        .sidebar {
+            width: 250px;
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            padding: 20px 0;
+            margin: 0;
+            background-color: #c2cad1;
+            font-size: 1.2rem;
+            border-bottom: 1px solid #34495e;
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .nav-menu li {
+            border-bottom: 1px solid #34495e;
+        }
+
+        .nav-menu a {
+            display: block;
+            padding: 15px 20px;
+            color: var(--sidebar-text);
+            text-decoration: none;
+            transition: background 0.3s;
+            cursor: pointer;
+        }
+
+        .nav-menu a:hover, .nav-menu a.active {
+            background-color: var(--sidebar-hover);
+            border-left: 4px solid #3498db;
+        }
+
+        /* Área de Conteúdo principal */
+        .content {
+            margin-left: 250px;
+            padding: 40px;
+            width: calc(100% - 250px);
+            max-width: 900px;
+            background-color: #fff;
+            min-height: 100vh;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        .module-section {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .module-section.active {
+            display: block;
+        }
+
+        h1 { color: var(--primary-color); border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; }
+        h2 { color: #2c3e50; margin-top: 30px; }
+        h3 { color: #34495e; }
+        
+        p { margin-bottom: 15px; text-align: justify; }
+        ul { margin-bottom: 20px; padding-left: 20px; }
+        li { margin-bottom: 8px; }
+
+        .image-container {
+            margin: 30px 0;
+            text-align: center;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+
+        .image-caption {
+            display: block;
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 10px;
+            font-style: italic;
+        }
+
+        .highlight-box {
+            background-color: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* Estilo do Botão do Colab */
+        .btn-colab {
+            display: inline-block;
+            background-color: #f9ab00; /* Cor padrão do Colab */
+            color: #fff;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-top: 20px;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .btn-colab:hover {
+            background-color: #e39a00;
+            transform: translateY(-2px);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; position: relative; }
+            .nav-menu { display: flex; overflow-x: auto; white-space: nowrap; }
+            .nav-menu a { padding: 10px 15px; border-bottom: none; border-left: none; }
+            .nav-menu a.active { border-bottom: 4px solid #3498db; border-left: none; }
+            .content { margin-left: 0; width: 100%; padding: 20px; box-sizing: border-box; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <h2>Tutorial PDCP 5G</h2>
+        <ul class="nav-menu">
+            <li><a onclick="showModule('mod1')" id="nav-mod1" class="active">Módulo 1: Arquitetura</a></li>
+            <li><a onclick="showModule('mod2')" id="nav-mod2">Módulo 2: Funções</a></li>
+            <li><a onclick="showModule('mod3')" id="nav-mod3">Módulo 3: Deep Dive</a></li>
+            <li><a onclick="showModule('mod4')" id="nav-mod4">Módulo 4: Estrutura PDU</a></li>
+            <li><a onclick="showModule('mod5')" id="nav-mod5">Resumo e Conclusão</a></li>
+            <li><a onclick="showModule('mod6')" id="nav-mod6">Referências</a></li>
+        </ul>
+    </nav>
+
+    <main class="content">
+
+        <section id="mod1" class="module-section active">
+            <h1>O que é o PDCP e onde ele se encontra na rede 5G?</h1>
+            <p>Bem-vindo ao primeiro módulo do nosso tutorial sobre a Camada 2 do 5G! Hoje vamos desmistificar um dos protocolos mais importantes da arquitetura de rádio: o <strong>PDCP</strong>, que significa <em>Packet Data Convergence Protocol</em> (Protocolo de Convergência de Dados de Pacotes).</p>
+
+            <h2>A Posição Estratégica do PDCP</h2>
+            <p>Para entender o PDCP, você precisa imaginá-lo como um "meio-campista" na arquitetura de protocolos da interface de rádio do 5G. Ele atua como uma ponte crucial entre o mundo dos dados ou da sinalização e as camadas inferiores que preparam esses dados para o ar.</p>
+            <ul>
+                <li><strong>Camadas Superiores:</strong> a subcamada PDCP fornece seus serviços diretamente para a <strong>RRC</strong> (<em>Radio Resource Control</em> - responsável pela sinalização) e a <strong>SDAP</strong> (<em>Service Data Adaptation Protocol</em> - responsável pelo mapeamento de fluxos de dados de usuário).</li>
+                <li><strong>Camadas Inferiores:</strong> para realizar seu trabalho, o PDCP depende dos serviços fornecidos pela camada imediatamente abaixo dele, a <strong>RLC</strong> (<em>Radio Link Control</em>). O PDCP espera que o RLC forneça serviços de transferência de dados, podendo ser no modo reconhecido (com confirmação de entrega) ou não reconhecido.</li>
+            </ul>
+
+            <h2>A Regra do Mapeamento (Radio Bearers)</h2>
+            <p>Como o PDCP se organiza para tratar as informações do seu celular (UE) para a antena (gNB)? A resposta está nas <strong>Radio Bearers</strong> (Portadoras de Rádio).</p>
+            <ul>
+                <li><strong>Uma relação direta:</strong> A regra principal de arquitetura é que cada Radio Bearer (RB) está associada a exatamente uma entidade PDCP.</li>
+                <li><strong>A Exceção:</strong> A única exceção a essa regra é a portadora de sinalização inicial, chamada de SRB0, que não utiliza a camada PDCP.</li>
+                <li><strong>Canais Específicos:</strong> O PDCP trabalha exclusivamente de forma dedicada. Ele só é utilizado para RBs que são mapeados em canais lógicos do tipo DCCH (canais de controle) e DTCH (canais de tráfego).</li>
+            </ul>
+
+            <div class="image-container">
+                <img src="/img/fig_1.png" alt="Pilha de protocolo do NR">
+                <span class="image-caption">Figura 1 – Pilha de protocolo do NR. Acima do PDCP estão SDAP e RRC. Abaixo estão RLC, MAC e PHY.</span>
+            </div>
+
+            <h2>Visão Funcional e Estrutura Interna</h2>
+            <p>O diagrama abaixo funciona como um "raio-x" do interior da própria entidade PDCP, mostrando as diferenças entre o lado da Transmissão e o lado da Recepção.</p>
+            
+            <div class="image-container">
+                <img src="/img/fig_2.png" alt="Diagrama da entidade PDCP">
+                <span class="image-caption">Figura 2 – Fluxo interno de transmissão (esquerda) e recepção (direita) do PDCP.</span>
+            </div>
+            
+            <div class="highlight-box">
+                <strong>O Processo:</strong> Na transmissão, os pacotes recebem número de sequência, são comprimidos, protegidos e roteados. Na recepção, ocorre a decifragem, verificação, reordenação (descartando duplicatas) e descompressão.
+            </div>
+        </section>
+
+        <section id="mod2" class="module-section">
+            <h1>Serviços e Funções do PDCP</h1>
+            <p>O PDCP tem duas faces: o que ele <strong>oferece</strong> como serviço para quem está acima dele e o que ele <strong>executa</strong> internamente para que a comunicação funcione sem falhas.</p>
+
+            <h2>O Menu de Serviços</h2>
+            <ul>
+                <li><strong>Transferência de Dados:</strong> Ele transporta tanto os dados do usuário (streaming, web) quanto os dados de controle (mensagens de sinalização RRC).</li>
+                <li><strong>Compressão de Cabeçalho:</strong> Otimiza o tamanho dos pacotes para economizar banda.</li>
+                <li><strong>Segurança:</strong> Aplica Cifragem e Proteção de Integridade.</li>
+            </ul>
+            <div class="highlight-box">
+                <strong>Detalhe de Capacidade:</strong> O tamanho máximo suportado para um pacote de dados (PDCP SDU) ou um pacote de controle (PDCP Control PDU) dentro desta camada é de exatamente <strong>9000 bytes</strong>.
+            </div>
+
+            <h2>Funções Internas</h2>
+            <ul>
+                <li><strong>Controle de Sequência (PDCP SN):</strong> Adiciona um Número de Sequência em cada pacote, vital para a ordenação.</li>
+                <li><strong>Reordenação e Entrega:</strong> Reordena pacotes que chegam bagunçados pelo ar para entregar na ordem certa (in-order delivery) ou fora de ordem, se configurado.</li>
+                <li><strong>Descarte de Duplicatas:</strong> Se o mesmo pacote chegar duas vezes, o PDCP identifica e descarta a cópia.</li>
+                <li><strong>Temporizador de Descarte (discardTimer):</strong> Possui um timer que joga fora pacotes de dados muito antigos na fila.</li>
+            </ul>
+
+            <h2>Roteamento e Duplicação (Split Bearer)</h2>
+            <p>Em arquiteturas avançadas do 5G, o PDCP pode fazer o roteamento de dados dividindo o fluxo entre duas torres (Split Bearers) ou duplicando os pacotes por caminhos diferentes para altíssima confiabilidade.</p>
+            <p>Esta imagem ilustra exatamente esse cenário avançado, onde uma única entidade PDCP se divide para enviar dados através de diferentes caminhos (por exemplo, usando o 5G e o 4G ao mesmo tempo, ou duas torres 5G diferentes).</p>
+            <div class="image-container">
+                <img src="/img/fig_3.png" alt="PDCP Duplication e Split Bearer">
+                <span class="image-caption">Figura 3 – Diagrama de Portador dividido e conectividade dupla, mostrando o PDCP distribuindo a carga.</span>
+            </div>
+
+            <h2>Formato do Pacote e Segurança (PDCP Data PDU)</h2>
+            <p>A figura abaixo mostra a "anatomia" de um pacote de dados do PDCP (Data PDU).</p>
+            <div class="image-container">
+                <img src="/img/fig_4.png" alt="Diagrama Portador dividido e conectividade dupla">
+                <span class="image-caption">Figura 4 – Diagrama Portador dividido e conectividade dupla</span>
+            </div>
+
+            
+        </section>
+
+        <section id="mod3" class="module-section">
+            <h1>Mergulho Profundo - ROHC e Segurança</h1>
+            
+            <h2>A Arte da Compressão de Cabeçalho (ROHC)</h2>
+            <p>Em redes IP, o cabeçalho de um pacote pode ser enorme. Se estivermos enviando pacotes pequenos, o cabeçalho pode acabar sendo maior que o próprio dado útil. Para evitar desperdício de banda de rádio, o PDCP utiliza o framework ROHC (<em>Robust Header Compression</em>).</p>
+            <p>O ROHC usa algoritmos matemáticos (Profiles) otimizados para tipos específicos de tráfego. Uma regra de ouro da arquitetura é que o cabeçalho do SDAP e os pacotes de Controle do SDAP <strong>nunca</strong> são comprimidos pelo ROHC.</p>
+            <p>A compressão exige que transmissor e receptor estejam sincronizados. O ROHC gera pequenos pacotes de feedback ("Interspersed ROHC feedback") para avisar o outro lado sobre o status da descompressão. O detalhe técnico aqui é que esses pacotes de feedback viajam "nus": eles não recebem número de sequência (PDCP SN) e não são cifrados.</p>
+            
+            <p>Um dos maiores serviços do PDCP é economizar banda da rede de rádio. A imagem abaixo ilustra o conceito do ROHC.</p>
+            <div class="image-container">
+                <img src="/img/fig_5.png" alt="Compressão robusta do cabeçote – ROHC">
+                <span class="image-caption">Figura 5 – Compressão robusta do cabeçote – ROHC</span>
+            </div>
+
+            <div class="highlight-box">
+                 Um cabeçalho IP/UDP/RTP tradicional consome muitos bytes (às vezes mais que os próprios dados de voz numa ligação, por exemplo). O PDCP comprime esse cabeçalho gigante em apenas alguns bytes antes de enviar para o ar.
+            </div>
+
+            <h2>A Fortaleza do PDCP (Integridade e Cifragem)</h2>
+            <p>Depois de comprimir os dados, o PDCP precisa garantir que viajem pelo ar sem serem lidos ou adulterados. A ordem é estrita: <strong>primeiro protege-se a integridade, depois aplica-se a cifragem.</strong></p>
+            
+            <h3>1. Proteção de Integridade</h3>
+            <p>Garante que a mensagem não sofreu injeção de dados. A proteção cobre o cabeçalho e os dados antes da cifragem. É gerado um código <strong>MAC-I</strong> de 32 bits anexado ao pacote.</p>
+            
+            <ul>
+                <li><strong>Onde se aplica?</strong> A proteção de integridade cobre o cabeçalho da PDU e a parte de dados antes da cifragem acontecer.</li>
+                <li><strong>A regra de uso: </strong> A Regra de Uso: Ela é sempre aplicada e obrigatória para as portadoras de sinalização de controle (SRBs). Para as portadoras de dados de usuário (DRBs), ela só é aplicada se a rede configurar explicitamente. Pacotes de controle do próprio PDCP não recebem essa proteção. </li>
+                <li><strong>O código MAC-I: </strong> O transmissor usa a chave de segurança para gerar um código de 32 bits chamado MAC-I (Message Authentication Code for Integrity) e o anexa ao final do pacote. No destino, o receptor faz a mesma conta (gerando o X-MAC); se o valor bater com o MAC-I recebido, o pacote é autêntico e íntegro.</li>
+            </ul>
+
+            <h3>2. Cifragem (Ciphering)</h3>
+            <p>A cifragem é o embaralhamento dos dados para garantir a confidencialidade. Se alguém interceptar o sinal de rádio, só verá lixo digital. A cifragem engolfa a parte de dados da PDU e também o campo MAC-I (o código de integridade que acabamos de calcular). Assim como na compressão, o cabeçalho SDAP fica de fora dessa bagunça e não é cifrado. Os pacotes de controle PDCP (como relatórios de status) também não são cifrados.</p>
+            <p>Para o algoritmo de cifragem funcionar, ele precisa de alguns ingredientes vitais:</p>
+
+            <ul>
+                <li>O valor <strong>COUNT</strong> (aquele contador interno de 32 bits que aprendemos no módulo 2).</li>
+                <li>O <strong>BEARER</strong>(a identidade da portadora de rádio, para que cada canal tenha uma criptografia isolada).</li>
+                <li>A <strong>KEY</strong> (a chave criptográfica mestra fornecida pelas camadas superiores).</li>
+                <li>A <strong>DIRECTION</strong> (um marcador indicando se o dado está subindo para a torre ou descendo para o celular).</li>
+            </ul>
+
+            <p> A figura a seguir ajuda a visualizar o impacto do ROHC (Robust Header Compression).</p>
+            <div class="image-container">
+                <img src="/img/fig_6.png" alt="ROHC Compression - VoLTE">
+                <span class="image-caption">Figura 6 – ROHC Compression - VoLTE</span>
+            </div>
+
+            <p>Um pacote original (que possui cabeçalhos IP, UDP e RTP, somando dezenas de bytes) é "espremido" pela entidade PDCP transmissora. O ROHC substitui toda aquela informação repetitiva por um "Context ID" (CID) e apenas os campos que realmente mudaram, reduzindo o cabeçalho para apenas 1 a 3 bytes antes de enviá-lo pelo ar. É a representação visual perfeita da economia de banda!</p>
+
+            <p>A figura 7 detalha o bloco de segurança da arquitetura do PDCP, mostrando exatamente o passo a passo de como a criptografia é aplicada.</p>
+            
+            <div class="image-container">
+                <img src="/img/fig_7.png" alt="Integridade e Cifragem">
+                <span class="image-caption">Figura 7 – Integridade e Cifragem</span>
+            </div>
+        </section>
+
+        <section id="mod4" class="module-section">
+            <h1>A Linguagem do PDCP (Estrutura de Mensagens)</h1>
+            <p>O PDCP se comunica gerando dois tipos fundamentais de mensagens, as PDUs (<em>Protocol Data Units</em>).</p>
+
+            <h2>1. Data PDU (A Carga Útil)</h2>
+            <p>A Data PDU é o caminhão de carga da camada. Ela transporta os dados de usuário ou de controle que vieram das camadas superiores, além de carregar a assinatura de segurança.</p>
+            <p>Anatomia da Data PDU:</p>
+            <ul>
+                <li><strong>Bit D/C:</strong> Um bit indicando Data ou Control (1 para Data).</li>
+                <li><strong>PDCP SN:</strong> Número de sequência (12 ou 18 bits configuráveis).</li>
+                <li><strong>Data:</strong> Os dados reais (SUD).</li>
+                <li><strong>MAC-I:</strong> 32 bits finais usados para verificar adulteração.</li>
+            </ul>
+
+            <div class="image-container">
+                <img src="/img/fig_8.png" alt="Data PDU 12 bits">
+                <span class="image-caption">Figura 8 – Formato de uma Data PDU para dados de usuário com um cabeçalho de 12 bits de sequência.</span>
+            </div>
+
+            <h2>2. Control PDU (A Gerência)</h2>
+            <p>Usada para a própria gerência do protocolo PDCP. Não sofre cifragem nem proteção de integridade.</p>
+            
+            <h3>PDCP Status Report</h3>
+            <p>Avisa o transmissor sobre pacotes entregues ou perdidos após uma reestruturação.</p>
+            <ul>
+                <li><strong>FMC (First Missing COUNT):</strong> Indica o valor de contagem do primeiro pacote faltando (32 bits).</li>
+                <li><strong>Bitmap:</strong> Mapa variável indicando acertos (1) e perdas (0).</li>
+            </ul>
+
+            <div class="image-container">
+                <img src="/img/fig_9.png" alt="Control PDU Status Report">
+                <span class="image-caption">Figura 9 – Formato de um Relatório de Status (Control PDU), mostrando os campos FMC e Bitmap.</span>
+            </div>
+            
+            <h3>Interspersed ROHC Feedback</h3>
+            <p>Pacotes enviados pelo ROHC sem número de sequência para sincronizar o algoritmo de compressão entre transmissor e receptor.</p>
+        </section>
+
+        <section id="mod5" class="module-section">
+            <h1>Resumo e Conclusão</h1>
+            <p>Chegamos ao final do nosso tutorial sobre a subcamada PDCP no 5G NR. Vamos recapitular os pontos centrais:</p>
+
+            <h2>Principais Pilares do PDCP</h2>
+            <ul>
+                <li><strong>Posicionamento e Mapeamento:</strong> O PDCP é a ponte estratégica entre as camadas superiores (RRC e SDAP) e as inferiores (RLC). A regra geral mapeia cada <em>Radio Bearer</em> (RB) a uma única entidade PDCP, com a notável exceção da portadora de controle SRB0[cite: 940, 946, 947].</li>
+                <li><strong>Serviços Essenciais:</strong> Ele viabiliza a transferência robusta de dados do plano de controle e do plano de usuário, suportando o processamento de pacotes que podem chegar a até 9000 bytes[cite: 975, 978].</li>
+                <li><strong>Eficiência Espectral (ROHC):</strong> A compressão de cabeçalho através do framework ROHC é vital para evitar o desperdício de banda de rádio, substituindo os extensos cabeçalhos IP originais por identificadores comprimidos[cite: 1016, 1046].</li>
+                <li><strong>Fortaleza de Segurança:</strong> A segurança segue uma ordem estrita de execução funcional: primeiro assegura-se a Integridade (gerando um código MAC-I de 32 bits) para atestar que os dados não sofreram adulterações, e somente depois disso aplica-se a Cifragem para garantir a confidencialidade da transmissão[cite: 1023, 1029, 1032].</li>
+                <li><strong>Organização das Mensagens:</strong> A comunicação do protocolo baseia-se na formatação de duas mensagens principais: as <em>Data PDUs</em> (que carregam efetivamente a carga útil atrelada a números de sequência) e as <em>Control PDUs</em> (mensagens de suporte e gerência, responsáveis por encaminhar Relatórios de Status e feedbacks essenciais do ROHC)[cite: 1054, 1060, 1069].</li>
+            </ul>
+
+            <h2>Conclusão</h2>
+            <p>O PDCP é o motor de otimização e processamento criptográfico que confere estabilidade e segurança à interface aérea do 5G. Sem suas complexas capacidades internas — que incluem reordenação sistêmica, descarte minucioso de duplicados, compressão robusta e proteção de dados —, as arquiteturas de rádio modernas dificilmente conseguiriam suprir as altíssimas exigências de segurança e eficiência de espectro propostas pelas redes de nova geração.</p>
+            
+            <div class="highlight-box">
+                <strong>Próximos Passos:</strong> Com essa base técnica e arquitetural consolidada e o tutorial finalizado, o cenário está perfeitamente preparado para o aprofundamento prático. O domínio dessa teoria facilita radicalmente a execução e o entendimento em simuladores voltados para testes contínuos de qualidade, retransmissões do RLC e fatiamento dinâmico de rede.
+            </div>
+
+            <h1>Simulador do Pipeline PDCP (5G NR)</h1>
+
+            <p>Este notebook contém uma simulação interativa da subcamada PDCP (Packet Data Convergence Protocol), responsável por funções críticas de segurança e eficiência na interface de rádio do 5G.
+
+O código a seguir implementa o fluxo estrito de processamento de transmissão de uma Data PDU (pacote de dados de usuário). O objetivo é visualizar as transformações criptográficas e estruturais que um pacote SDU sofre antes de ser encapsulado e roteado para a camada inferior (RLC).</p>
+                <div class="highlight-box">
+                <strong>Próximos Passos (Mão na Massa):</strong> Com essa base técnica e arquitetural consolidada, o cenário está perfeitamente preparado para o aprofundamento prático. Acesse o nosso laboratório virtual para simular a alocação de chaves e o impacto computacional da criptografia e compressão em tempo real.
+                
+                <br><br>
+                <div style="text-align: center;">
+                    <a href="https://colab.research.google.com/drive/1APN1V1HV8yqHk3AUVd7DARFaF9qpxJKT?usp=sharing" target="_blank" rel="noopener noreferrer" class="btn-colab">
+                    Abrir Simulador PDCP no Google Colab
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section id="mod6" class="module-section">
+            <h1>Referências Bibliográficas</h1>
+            <p>O conteúdo deste tutorial foi fundamentado em especificações técnicas oficiais da indústria de telecomunicações e complementado com diagramas de portais especializados em engenharia de redes.</p>
+
+            <h2>Documento Base (Especificação Oficial)</h2>
+            <ul>
+                <li><strong>3GPP / ETSI (2021).</strong> <em>TS 138 323 V15.8.0: 5G; NR; Packet Data Convergence Protocol (PDCP) specification (Release 15).</em> European Telecommunications Standards Institute. Disponível no arquivo técnico oficial anexado ao projeto.</li>
+            </ul>
+
+            <h2>Fontes de Imagens e Diagramas Adicionais</h2>
+            <p>As ilustrações utilizadas para fins didáticos neste tutorial foram referenciadas a partir dos seguintes portais de tecnologia e telecomunicações:</p>
+            <ul>
+                <li><strong>ShareTechnote.</strong> Ilustrações da pilha de protocolos 5G, processo de compressão ROHC e formato de Control PDU. <br><em>Links: <a href="https://www.sharetechnote.com" target="_blank">sharetechnote.com</a></em></li>
+                <li><strong>Resurchify.</strong> Diagramas da estrutura interna da entidade PDCP (transmissão/recepção) e formato da Data PDU de 12 bits. <br><em>Link: <a href="https://www.resurchify.com" target="_blank">resurchify.com</a></em></li>
+                <li><strong>Telecommunications4Dummies.</strong> Diagrama de arquitetura de conectividade dupla (Dual Connectivity) e Split Bearer. <br><em>Link: <a href="https://telecommunications4dummies.com" target="_blank">telecommunications4dummies.com</a></em></li>
+                <li><strong>TechPlayon.</strong> Ilustração conceitual da compressão de cabeçalho ROHC em canais de rádio. <br><em>Link: <a href="https://www.techplayon.com" target="_blank">techplayon.com</a></em></li>
+                <li><strong>NXGConnect.</strong> Diagrama em blocos detalhando a sequência exata de Proteção de Integridade e Cifragem na camada PDCP. <br><em>Link: <a href="https://www.nxgconnect.com" target="_blank">nxgconnect.com</a></em></li>
+            </ul>
+        </section>
+
+    </main>
+
+    <script>
+        function showModule(moduleId) {
+            // Esconde todas as seções
+            const sections = document.querySelectorAll('.module-section');
+            sections.forEach(sec => sec.classList.remove('active'));
+
+            // Remove a classe active de todos os links do menu
+            const navLinks = document.querySelectorAll('.nav-menu a');
+            navLinks.forEach(link => link.classList.remove('active'));
+
+            // Mostra a seção desejada e marca o menu correspondente
+            document.getElementById(moduleId).classList.add('active');
+            document.getElementById('nav-' + moduleId).classList.add('active');
+            
+            // Em telas menores, rola para o topo após o clique
+            if(window.innerWidth <= 768) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+    </script>
+</body>
+</html>
